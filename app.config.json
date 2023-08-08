@@ -1,0 +1,27 @@
+{
+  "modules": [
+    {
+      "name": "projectsDemo",
+      "_id": "projectsConfig",
+      "plugins": [
+        {
+          "name": "@vcmap/project-selector",
+          "entry": "plugins/@vcmap/project-selector/index.js",
+          "selected": "Rennes 3D Project",
+          "selectedModules": [],
+          "open": false,
+          "projects": [
+            {
+              "name": "Rennes 3D Project",
+              "modules": ["rennes3d.config.json"]
+            }]
+        }
+      ]
+    },
+    {
+      "name": "custom module",
+      "layers": [],
+      "maps": []
+    }
+  ]
+}

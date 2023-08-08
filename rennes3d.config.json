@@ -1,0 +1,286 @@
+{
+  "name": "Rennes3DConfig",
+  "mapcontainer": "vcs_map_container",
+  "_id": "Rennes3DConfig",
+  "startingViewpointName": "rennes",
+  "startingMapName": "cesium",
+  "projection": {
+    "epsg": "25833",
+    "proj4": "+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs"
+  },
+  "featureInfo": [
+    {
+      "type": "TableFeatureInfoView",
+      "name": "tableAll",
+      "keyMapping": {
+        "roofType": "codeLists.keys.roofType",
+        "function": "codeLists.keys.function"
+      },
+      "valueMapping": {
+        "roofType": "codeLists.values.roofType.${value}",
+        "function": {
+          "1000": "codeLists.values.function.1000",
+          "1111": "myOwnMapping1111"
+        }
+      }
+    },
+    {
+      "type": "TableFeatureInfoView",
+      "name": "filteredTable",
+      "attributeKeys": ["gml:name", "function"],
+      "keyMapping": {
+        "function": "codeLists.keys.function"
+      },
+      "valueMapping": {
+        "function": "codeLists.values.function.${value}"
+      }
+    }
+  ],
+  "maps": [
+    {
+      "type": "OpenlayersMap",
+      "name": "ol3"
+    },
+    {
+      "type": "CesiumMap",
+      "name": "cesium",
+      "debugging": false,
+      "fxaa": false,
+      "enableLightning": true,
+      "allowSoftwareRendering": false,
+      "maximumScreenSpaceError": 2,
+      "fogEnabled": true,
+      "fogEnabledMobile": true,
+      "fogDensity": 0.0002,
+      "fogDensityMobile": 0.0004,
+      "fogScreenSpaceError": 2,
+      "fogScreenSpaceErrorMobile": 4
+    }
+  ],
+  "layers": [
+    {
+      "name": "terrain",
+      "type": "TerrainLayer",
+      "url": "https://rennes3d-dev-tiles.s3.fr-par.scw.cloud/b3ef17bf-fdde-4979-8f05-8b4db5811c43/",
+      "activeOnStartup": false,
+      "requestVertexNormals": true,
+      "zIndex": 1,
+      "properties": {
+        "title": "Terrain",
+        "showInOverviewMap": true
+      }
+    },
+    {
+      "name": "Openstreetmap OSM Cache",
+      "url": "https://osm.virtualcitymap.de/mapproxy/wmts/osm/{TileMatrixSet}/{TileMatrix}/{TileCol}/{TileRow}.png",
+      "type": "WMTSLayer",
+      "datasourceId": "2jEtgBemjJaSNx3AH",
+      "activeOnStartup": true,
+      "layer": "osm",
+      "wmtsStyle": "default",
+      "format": "image/png",
+      "tileMatrixSetID": "osm_grid",
+      "tileMatrixPrefix": "",
+      "maxLevel": 19,
+      "tilingSchema": "mercator",
+      "extent": {
+        "coordinates": [-180, -85, 180, 85],
+        "projection": {
+          "epsg": "EPSG:4326"
+        }
+      },
+      "opacity": "1",
+      "hiddenObjectIds": [],
+      "numberOfLevelZeroTilesX": 1,
+      "numberOfLevelZeroTilesY": 1,
+      "exclusiveGroups": ["base"],
+      "properties": {
+        "title": "OpenStreetMap",
+        "showInOverviewMap": true,
+        "attributions": {
+          "provider": "OpenStreetMap contributors",
+          "url": "http://www.openstreetmap.org/",
+          "year": "2019"
+        }
+      }
+    },
+    {
+      "type": "CesiumTilesetLayer",
+      "name": "roof3d",
+      "title": "Roof 3D",
+      "url": "https://rennes-coopterr-solaire-tiles.s3.fr-par.scw.cloud/fe157549-1c80-47f1-828a-f1a97bf92d80/tileset.json",
+      "activeOnStartup": false,
+      "allowPicking": true,
+      "screenSpaceError": 16,
+      "screenSpaceErrorMobile": 32,
+      "zIndex": 3
+    },
+
+    {
+      "name": "Installations2DWMS",
+      "title": "Installations 2D WMS",
+      "url": "https://public.sig.rennesmetropole.fr/geoserver/ows",
+      "type": "WMSLayer",
+      "datasourceId": "cD4sWbdNBpNomskPA",
+      "activeOnStartup": false,
+      "extent": {
+        "coordinates": [
+          -1.865982163324317, 48.04261742747195, -1.4666885317990264,
+          48.20808938784279
+        ],
+        "epsg": "EPSG:4326"
+      },
+      "version": "1.1.1",
+      "layers": "nrj_prod:photovoltaique_installations_publiques",
+      "parameters": "format=image/png&transparent=true",
+      "maxLevel": 18,
+      "tilingSchema": "geographic",
+      "featureInfo": null
+    },
+    {
+      "name": "Irradiance2D",
+      "title": "Irradiance 2D",
+      "url": "https://public.sig.rennesmetropole.fr/geoserver/ows",
+      "type": "WMSLayer",
+      "datasourceId": "KPewTCCek8Ze3Mu4c",
+      "activeOnStartup": false,
+      "extent": {
+        "coordinates": [
+          -1.7576530841215605, 48.07385177844222, -1.5557008869444715,
+          48.151018856551445
+        ],
+        "epsg": "EPSG:4326"
+      },
+      "version": "1.1.1",
+      "layers": "cli_climat:photovoltaïque_potentiel_classif_2021",
+      "parameters": "format=image/png&transparent=true",
+      "maxLevel": 18,
+      "tilingSchema": "geographic"
+    },
+    {
+      "name": "Quartier2DWMS",
+      "title": "Quartier 2D WMS",
+      "url": "https://public.sig.rennesmetropole.fr/geoserver/ows",
+      "type": "WMSLayer",
+      "datasourceId": "mBD4bMoqYEBRGLBLy",
+      "activeOnStartup": false,
+      "extent": {
+        "coordinates": [
+          -1.7531913311894542, 48.07281174582175, -1.5694136131194094,
+          48.1506302161381
+        ],
+        "epsg": "EPSG:4326"
+      },
+      "version": "1.1.1",
+      "layers": "dem_stats:iris",
+      "parameters": "format=image/jpeg",
+      "maxLevel": 18,
+      "tilingSchema": "geographic",
+      "opacity": 0.5
+    },
+    {
+      "name": "metro",
+      "title": "Metro",
+      "url": "https://public.sig.rennesmetropole.fr/geoserver/wfs?&outputFormat=application/json&srsName=EPSG:4326&SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=trp_coll:metro_trace_axe&STARTINDEX=0&COUNT=1000000&SRSNAME=urn:ogc:def:crs:EPSG::4326&BBOX=48.00616775832305905,-1.76368099999999983,48.1778082416769422,-1.5842989999999999,urn:ogc:def:crs:EPSG::4326",
+      "type": "GeoJSONLayer",
+      "activeOnStartup": false,
+      "style": {
+        "name": "metroStyle",
+        "type": "DeclarativeStyleItem",
+        "declarativeStyle": {
+          "strokeWidth": "4",
+          "color": {
+            "conditions": [
+              ["${ligne} === 'a'", "color('#E31A1C')"],
+              ["${ligne} === 'b'", "color('#33A02C')"],
+              ["true", "color('#000000')"]
+            ]
+          }
+        }
+      },
+      "zIndex": 2
+    }
+  ],
+  "viewpoints": [
+    {
+      "name": "rennes",
+      "groundPosition": [-1.7219, 48.09],
+      "distance": 29000,
+      "pitch": -45,
+      "roll": 0,
+      "heading": 0,
+      "animate": true,
+      "type": "Viewpoint",
+      "duration": 0.5,
+      "properties": {
+        "title": {
+          "en": "Rennes",
+          "fr": "Rennes"
+        }
+      }
+    }
+  ],
+  "contentTree": [
+    {
+      "name": "baseMap",
+      "type": "SubContentTreeItem",
+      "icon": "$vcsPoi",
+      "title": "Base Maps"
+    },
+    {
+      "name": "baseMap.trees",
+      "type": "LayerContentTreeItem",
+      "layerName": "Bäume"
+    },
+    {
+      "name": "baseMap.terrain",
+      "type": "LayerContentTreeItem",
+      "layerName": "terrain"
+    },
+    {
+      "name": "baseMap.openStreetMap",
+      "type": "LayerContentTreeItem",
+      "layerName": "Openstreetmap OSM Cache"
+    },
+    {
+      "name": "baseMap.aerialImage2015",
+      "type": "LayerContentTreeItem",
+      "layerName": "rennesOrtho"
+    },
+    {
+      "name": "data",
+      "type": "NodeContentTreeItem",
+      "title": "Layers"
+    },
+    {
+      "name": "data.installations",
+      "type": "LayerContentTreeItem",
+      "title": "Installations2DWMS"
+    },
+    {
+      "name": "data.irradiance",
+      "type": "LayerContentTreeItem",
+      "title": "Irradiance2D"
+    },
+    {
+      "name": "data.quartier",
+      "type": "LayerContentTreeItem",
+      "layerName": "Quartier2DWMS"
+    },
+    {
+      "name": "data.metro",
+      "type": "LayerContentTreeItem",
+      "layerName": "metro"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "@vcmap/theme-changer",
+      "entry": "plugins/@vcmap/theme-changer/index.js"
+    },
+    {
+      "name": "@vcmap/create-link",
+      "entry": "plugins/@vcmap/create-link/index.js"
+    }
+  ]
+}
