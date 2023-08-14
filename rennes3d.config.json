@@ -179,26 +179,10 @@
       "opacity": 0.5
     },
     {
-      "name": "metro",
-      "title": "Metro",
-      "url": "https://public.sig.rennesmetropole.fr/geoserver/wfs?&outputFormat=application/json&srsName=EPSG:4326&SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=trp_coll:metro_trace_axe&STARTINDEX=0&COUNT=1000000&SRSNAME=urn:ogc:def:crs:EPSG::4326&BBOX=48.00616775832305905,-1.76368099999999983,48.1778082416769422,-1.5842989999999999,urn:ogc:def:crs:EPSG::4326",
+      "name": "toDisplay",
       "type": "GeoJSONLayer",
-      "activeOnStartup": false,
-      "style": {
-        "name": "metroStyle",
-        "type": "DeclarativeStyleItem",
-        "declarativeStyle": {
-          "strokeWidth": "4",
-          "color": {
-            "conditions": [
-              ["${ligne} === 'a'", "color('#E31A1C')"],
-              ["${ligne} === 'b'", "color('#33A02C')"],
-              ["true", "color('#000000')"]
-            ]
-          }
-        }
-      },
-      "zIndex": 2
+      "activeOnStartup": true,
+      "zIndex": 5
     }
   ],
   "viewpoints": [

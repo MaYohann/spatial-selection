@@ -26,9 +26,6 @@
               />
             </v-col>
           </v-row>
-          <v-row>
-
-          </v-row>
           <GeometryFilter :source="layers"></GeometryFilter>
         </v-container>
       </template>
@@ -50,39 +47,11 @@
 
   import { name } from '../../package.json';
   import GeometryFilter from "./geometryFilter.vue";
+  import {getLayerByClass} from "../utils/vcsUtils.js";
 
-  function getLayerByClass(app, classNames) {
-    const layers = [];
-    [...app.layers].forEach((l) => {
-      if (classNames.includes(l.className)) {
-        if (l.className === 'WMSLayer') {
-          console.log("WMS ! ", l)
-          layers.push({
-            name: l.name,
-            url: l.url,
-            layers: l.parameters.LAYERS,
-          });
-        } else if (l.className === 'CesiumTilesetLayer') {
-          layers.push({
-            name: l.name,
-            url: l.url,
-          });
-        } else {
-          layers.push({
-            name: l.name,
-          });
-        }
-      }
-    });
-    return layers;
-  }
 
-  // async function getLayerByName(app, layerName) {
-  //   const layer = app.layers.getByKey(layerName);
-  //   await layer.fetchData();
 
-  //   return layer;
-  // }
+
 
   async function getLayerAttributes(app, layerName) {
     // How to:

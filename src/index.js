@@ -28,6 +28,7 @@ export default function plugin(config, baseUrl) {
     _removeToolbox: () => {},
     state: {},
     initialize(vcsUiApp, state) {
+
       const { action, destroy } = createToggleAction(
         {
           id: 'wfsAttributeQueryWidgetAction',

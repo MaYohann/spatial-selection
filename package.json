@@ -58,9 +58,12 @@
     "@vitest/coverage-c8": "^0.32.4",
     "jest-canvas-mock": "^2.5.2",
     "jsdom": "^22.1.0",
-    "vitest": "^0.32.4"
+    "vitest": "^0.32.4",
+    "vuetify": "~2.6.7"
   },
   "dependencies": {
-    "@camptocamp/ogc-client": "^1.0.0"
+    "@camptocamp/ogc-client": "^1.0.0",
+    "axios": "^1.4.0",
+    "vue-axios": "^3.5.2"
   }
 }

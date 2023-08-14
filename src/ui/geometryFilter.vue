@@ -20,6 +20,7 @@
                         };
                       }
                     "
+            @change="onLayerChange"
             placeholder="Please select a layer"
         />
       </v-col>
@@ -39,11 +40,13 @@
             :items="Object.entries(filtersOn)"
             :item-text="(item) => item[0] + ':' + item[1]"
             :item-value="(item) => item[0]"
+            :disabled=!this.activeFilterInput
             placeholder="Select attribute"
+            hint="Request layer first"
+            persistent-hint
         />
       </v-col>
     </v-row>
-
     <v-row >
       <v-col cols="2">
         <VcsLabel html-for="textInput" class="text-caption">
@@ -54,6 +57,7 @@
         <VcsTextField
             :placeholder="!this.selectedFilter ? 'disabled' : this.placeHolder"
             :disabled=!this.selectedFilter
+            v-model="listIds"
             clearable
             :rules="[rules.required]"
         />
@@ -77,17 +81,14 @@
 
 </style>
 <script>
-import { VContainer, VRow, VCol } from 'vuetify/lib';
-import {
-  VcsLabel,
-  VcsSelect,
-  VcsTextField,
-  VcsButton,
-  VcsFormButton,
-  VcsFormSection,
-} from '@vcmap/ui';
-import { WfsEndpoint } from '@camptocamp/ogc-client';
-
+import {VCol, VContainer, VRow} from 'vuetify/lib';
+import {VcsButton, VcsFormButton, VcsFormSection, VcsLabel, VcsSelect, VcsTextField, VcsUiApp,} from '@vcmap/ui';
+import {WfsEndpoint} from '@camptocamp/ogc-client';
+import axios from 'axios'
+import {GeoJSON} from "ol/format.js";
+import {inject, ref} from "vue";
+import {getLayerByClass, getLayerByName} from "../utils/vcsUtils.js";
+import {xmlTemplate} from "../../pattern.js";
 export default {
   props: {
     source: {
@@ -106,6 +107,16 @@ export default {
     VcsTextField,
     VcsButton
   },
+  setup() {
+    const app = inject('vcsApp');
+    const wfsLayers = ref([]);
+
+    wfsLayers.value = getLayerByName(app, 'toDisplay');
+    return {
+      wfsLayers
+    }
+
+  },
   created() {
 
   },
@@ -115,7 +126,9 @@ export default {
     return {
       isValid: false,
       filtersOn: [],
+      listIds: '',
       selectedLayer: {},
+      activeFilterInput: false,
       selectedFilter: {},
       sampleValues: {},
       state: {},
@@ -136,11 +149,7 @@ export default {
     },
     requiredLegend() {
       return 'Must be a ' + this.placeHolder
-    },
-
-    doFlash() {
-      return this.flash && !this.isReady;
-    },
+    }
   },
   methods: {
     activate() {
@@ -149,37 +158,51 @@ export default {
     validate() {
 
     },
+    onLayerChange() {
+      this.activeFilterInput = false
+    },
     conditionRule(value) {
+
       if (this.filtersOn[this.selectedFilter] === 'integer') {
-        return /^\d+(,\d+)*$/.test(value) || this.requiredLegend
+        return /^\s*\d+\s*(,\s*\d+\s*)*$/.test(value) || this.requiredLegend
       } else if (this.filtersOn[this.selectedFilter] === 'string') {
         return /^\d+(,\d+)*$/.test(value) || this.requiredLegend
       } else if (this.filtersOn[this.selectedFilter] === 'float') {
         return /^\d+(,\d+)*$/.test(value) || this.requiredLegend
       } else {
         console.log("filterOn, sf", this.filtersOn, this.selectedFilter)
-        return this.filtersOn[this.selectedFilter] + 'Unnamaged type'
+        return this.filtersOn[this.selectedFilter] + 'Unmamaged type'
       }
     },
     async runQuery() {
-      let wfs = await new WfsEndpoint("https://public.sig.rennesmetropole.fr/geoserver/ows").isReady()
+      let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
 
-      const url = wfs.getFeatureUrl('dem_stats:iris', {
+      let url = wfs.getFeatureUrl(this.selectedLayer.layers, {
         asJson: true,
-        maxFeatures: 1000
+        maxFeatures: 1000,
+        outputCrs: "EPSG:4326"
       });
-      let pop = wfs.getFeatureTypeFull('dem_stats:iris')
-      console.log("Run run !", url, pop)
+      if (this.listIds !== "") {
+        url += "&cql_filter=" + this.selectedFilter + " IN (" + this.listIds + ")"
+      }
+      axios.get(url).then((response) => {
+        console.log(response.data)
+        let data = response.data.features[0].geometry.coordinates.toString().replaceAll(',', ' ')
+        let modifiedXmlString = xmlTemplate.replace('{{coordinatesList}}', data);
+        let config = {
+          headers: {'Content-Type': 'text/xml'}
+        };
+        axios.post("http://localhost:8080/wfs?", modifiedXmlString, config).then((jsonResponse) => {
+          console.log("Response", Object.keys(jsonResponse.data.CityObjects))
+        })
+      })
     },
     async requestFields() {
       let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
-      console.log("wfs", wfs)
       let pop = await wfs.getFeatureTypeFull(this.selectedLayer.layers)
       this.sampleValues = await wfs.getFeatureTypePropDetails(this.selectedLayer.layers)
-      let entries = pop.properties
-
-      this.filtersOn = entries
-      console.log("this", this.filtersOn)
+      this.activeFilterInput = true
+      this.filtersOn = pop.properties
     }
   },
 };
