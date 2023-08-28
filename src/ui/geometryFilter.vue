@@ -1,81 +1,5 @@
 <template>
-  <v-container class="py-0 px-1">
-    <v-row>
-      <v-col cols="2">
-        <VcsLabel html-for="textInput" class="text-caption">
-          Layer
-        </VcsLabel>
-      </v-col>
-      <v-col cols="7">
-        <VcsSelect
-            v-model="selectedLayer"
-            :items="source"
-            :item-text="(item) => item.name"
-            :item-value="
-                      (item) => {
-                        return {
-                          name: item.name,
-                          url: item.url,
-                          layers: item.layers,
-                        };
-                      }
-                    "
-            @change="onLayerChange"
-            placeholder="Please select a layer"
-        />
-      </v-col>
-      <v-col cols="1" md="2">
-        <VcsFormButton @click="requestFields()">&#10227;</VcsFormButton>
-      </v-col>
-    </v-row>
-    <v-row>
-      <v-col cols="2">
-        <VcsLabel html-for="textInput" class="text-caption">
-          From:
-        </VcsLabel>
-      </v-col>
-      <v-col>
-        <VcsSelect
-            v-model="selectedFilter"
-            :items="Object.entries(filtersOn)"
-            :item-text="(item) => item[0] + ':' + item[1]"
-            :item-value="(item) => item[0]"
-            :disabled=!this.activeFilterInput
-            placeholder="Select attribute"
-            hint="Request layer first"
-            persistent-hint
-        />
-      </v-col>
-    </v-row>
-    <v-row >
-      <v-col cols="2">
-        <VcsLabel html-for="textInput" class="text-caption">
-          Condition:
-        </VcsLabel>
-      </v-col>
-      <v-col>
-        <VcsTextField
-            :placeholder="!this.selectedFilter ? 'disabled' : this.placeHolder"
-            :disabled=!this.selectedFilter
-            v-model="listIds"
-            clearable
-            :rules="[rules.required]"
-        />
-      </v-col>
-    </v-row>
-    <v-row no-gutters  v-if="this.sampleValues && this.sampleValues[this.selectedFilter]">
-      <v-col cols="8">
-        <VcsLabel html-for="textInput" class="text-caption">
-          Example value: {{this.sampleValues[this.selectedFilter].uniqueValues[0].value}}
-        </VcsLabel>
-      </v-col>
-    </v-row>
-    <v-row justify="space-around">
-      <v-col cols="6" md="4">
-        <VcsFormButton @click="runQuery()">Clear</VcsFormButton>
-      </v-col>
-    </v-row>
-  </v-container>
+
 </template>
 <style>
 
@@ -89,12 +13,18 @@ import {GeoJSON} from "ol/format.js";
 import {inject, ref} from "vue";
 import {getLayerByClass, getLayerByName} from "../utils/vcsUtils.js";
 import {xmlTemplate} from "../../pattern.js";
+import {FeatureAtPixelInteraction, VectorStyleItem, EventType} from "@vcmap/core";
+import * as Cesium from "@vcmap-cesium/engine";
 export default {
   props: {
     source: {
       type: Array,
       required: true,
     },
+    selectedObject3D: {
+      type: Object,
+      required: true
+    }
   },
   components: {
     VContainer,
@@ -110,12 +40,12 @@ export default {
   setup() {
     const app = inject('vcsApp');
     const wfsLayers = ref([]);
-
+    // app.maps.eventHandler.featureInteraction.setActive(EventType.CLICK);
     wfsLayers.value = getLayerByName(app, 'toDisplay');
     return {
+      app,
       wfsLayers
     }
-
   },
   created() {
 
@@ -135,6 +65,9 @@ export default {
       rules: {
         required: value => this.conditionRule(value)
       },
+      config: {
+        headers: {'Content-Type': 'text/xml'}
+      }
     };
   },
   watch: {
@@ -158,11 +91,27 @@ export default {
     validate() {
 
     },
+    highlight3DObjects(app, layerName, objectIDs) {
+      console.log("Highlight objects", objectIDs)
+      const highlightStyle = new VectorStyleItem({
+        fill: { color: 'rgb(63,185,30)' },
+      });
+
+      const object3DLayer = this.app.layers.getByKey(layerName);
+      console.log("object3dLayer", object3DLayer);
+      const hightlightParameters = {};
+      objectIDs.forEach((x) => {
+        hightlightParameters[x] = highlightStyle;
+      });
+      object3DLayer.featureVisibility.clearHighlighting();
+      object3DLayer.featureVisibility.highlight(hightlightParameters);
+    },
+
     onLayerChange() {
       this.activeFilterInput = false
     },
-    conditionRule(value) {
 
+    conditionRule(value) {
       if (this.filtersOn[this.selectedFilter] === 'integer') {
         return /^\s*\d+\s*(,\s*\d+\s*)*$/.test(value) || this.requiredLegend
       } else if (this.filtersOn[this.selectedFilter] === 'string') {
@@ -174,9 +123,8 @@ export default {
         return this.filtersOn[this.selectedFilter] + 'Unmamaged type'
       }
     },
-    async runQuery() {
+    async generateQueryUrl() {
       let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
-
       let url = wfs.getFeatureUrl(this.selectedLayer.layers, {
         asJson: true,
         maxFeatures: 1000,
@@ -185,17 +133,24 @@ export default {
       if (this.listIds !== "") {
         url += "&cql_filter=" + this.selectedFilter + " IN (" + this.listIds + ")"
       }
-      axios.get(url).then((response) => {
-        console.log(response.data)
-        let data = response.data.features[0].geometry.coordinates.toString().replaceAll(',', ' ')
+      return url;
+    },
+
+    async runQuery() {
+      let setToHighlight = new Set()
+      let url = await this.generateQueryUrl();
+      let response = await axios.get(url);
+      for (const feature of response.data.features) {
+        let data = feature.geometry.coordinates.toString().replaceAll(',', ' ')
         let modifiedXmlString = xmlTemplate.replace('{{coordinatesList}}', data);
-        let config = {
-          headers: {'Content-Type': 'text/xml'}
-        };
-        axios.post("http://localhost:8080/wfs?", modifiedXmlString, config).then((jsonResponse) => {
-          console.log("Response", Object.keys(jsonResponse.data.CityObjects))
+        let cityObjects = await axios.post("https://wfs.apps.gs-fr-prod.camptocamp.com/wfs?", modifiedXmlString, this.config);
+        Object.values(cityObjects.data.CityObjects).forEach((elt) => {
+          elt.geometry[0]?.semantics?.surfaces?.forEach(surface => {
+            setToHighlight.add(surface.id)
+          })
         })
-      })
+      }
+      this.highlight3DObjects(this.app, this.selectedObject3D.name, setToHighlight);
     },
     async requestFields() {
       let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
