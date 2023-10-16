@@ -127,12 +127,10 @@
   } from '@vcmap/ui';
   import { inject, onMounted, ref, computed } from 'vue';
   import { name } from '../../package.json';
-  import GeometryFilter from "./geometryFilter.vue";
 
   export default {
     name: 'WFSAttributeQuery',
     components: {
-      GeometryFilter,
       VContainer,
       VcsFormSection,
       VcsLabel,
