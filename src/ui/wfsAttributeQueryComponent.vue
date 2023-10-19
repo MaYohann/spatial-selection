@@ -68,7 +68,7 @@
                     :item-text="(item) => item[0] + ':' + item[1]"
                     :item-value="(item) => item[0]"
                     :disabled=!activeFilterInput
-                    placeholder="Select attribute"
+                    :placeholder="!activeFilterInput ? 'You need to select and request a layer first' : 'Select attribute'"
                     hint="Request layer first"
                     persistent-hint
                 />
@@ -82,8 +82,8 @@
               </v-col>
               <v-col>
                 <VcsTextField
-                    :placeholder="!selectedFilter ? 'disabled' : placeHolder"
-                    :disabled=!selectedFilter
+                    :placeholder="!selectedFilter.length ? 'You need to select a attribute first' : placeHolder"
+                    :disabled="!selectedFilter.length"
                     v-model="listIds"
                     clearable
                     :rules="[rules.required]"
@@ -98,8 +98,11 @@
               </v-col>
             </v-row>
             <v-row justify="space-around">
-              <v-col cols="6" md="4">
-                <VcsFormButton @click="runQuery()" :disabled="querying">Request objects</VcsFormButton>
+              <v-col>
+                <VcsFormButton variant="filled" @click="clear()">Clear</VcsFormButton>
+              </v-col>
+              <v-col>
+                <VcsFormButton @click="runQuery()" :disabled="!canRequest">Request objects</VcsFormButton>
               </v-col>
             </v-row>
           </v-container>
@@ -150,6 +153,9 @@
       },
       requiredLegend() {
         return 'Must be a ' + this.placeHolder
+      },
+      canRequest() {
+        return this.activeFilterInput && this.listIds !== ""
       }
     },
     methods: {
@@ -182,8 +188,6 @@
         if (this.filtersOn[this.selectedFilter] === 'integer') {
           return /^\s*\d+\s*(,\s*\d+\s*)*$/.test(value) || this.requiredLegend
         } else if (this.filtersOn[this.selectedFilter] === 'string') {
-          return /^\d+(,\d+)*$/.test(value) || this.requiredLegend
-        } else if (this.filtersOn[this.selectedFilter] === 'float') {
           return /^\d+(,\d+)*$/.test(value) || this.requiredLegend
         } else {
           return this.filtersOn[this.selectedFilter] + 'Unmamaged type'
@@ -224,6 +228,26 @@
         this.querying = false
       },
 
+      clearForms() {
+        this.isValid = false
+        this.querying = false
+        this.activeFilterInput = false
+        this.filtersOn = []
+        this.listIds = ''
+        this.selectedLayer = {}
+        this.selectedFilter = {}
+      },
+
+      clearDatas() {
+        const object3DLayer = this.app.layers.getByKey(this.selectedObject3D.name);
+        object3DLayer.featureVisibility.clearHighlighting();
+      },
+
+      clear() {
+        this.clearForms()
+        this.clearDatas()
+      },
+
       /**
        * 1) Run standard WFS Query to request the envelope geometry of the actives filters
        * 2) create 3D WFS request to get all the ids of the building inside the envelope
@@ -231,15 +255,15 @@
        * @returns {Promise<void>}
        */
       async runQuery() {
-        this.startQueryingUi();
+        this.startQueryingUi()
         let setToHighlight = new Set()
-        let url = await this.generateQueryUrl();
-        let response = await axios.get(url);
-        let nbBuildings = 0;
+        let url = await this.generateQueryUrl()
+        let response = await axios.get(url)
+        let nbBuildings = 0
         for (const feature of response.data.features) {
           let data = feature.geometry.coordinates.toString().replaceAll(',', ' ')
-          let modifiedXmlString = xmlTemplate.replace('{{coordinatesList}}', data);
-          let cityObjects = await axios.post("https://wfs.apps.gs-fr-prod.camptocamp.com/wfs?", modifiedXmlString, this.config);
+          let modifiedXmlString = xmlTemplate.replace('{{coordinatesList}}', data)
+          let cityObjects = await axios.post(this.config.wfs3dServer, modifiedXmlString, this.postConfig);
           let cityObjectsElements =  Object.values(cityObjects.data.CityObjects);
           nbBuildings += cityObjectsElements.length;
           cityObjectsElements.forEach((elt) => {
@@ -261,7 +285,7 @@
     },
     setup() {
       const app = inject('vcsApp');
-      const { state } = app.plugins.getByKey(name);
+      const { state, config } = app.plugins.getByKey(name);
 
       const object3Ds = ref([]);
       const wmsLayers = ref([]);
@@ -285,6 +309,7 @@
       return {
         app,
         state,
+        config,
         object3Ds,
         layers: wmsLayers,
         attributes,
@@ -308,7 +333,7 @@
         rules: {
           required: value => this.conditionRule(value)
         },
-        config: {
+        postConfig: {
           headers: {'Content-Type': 'text/xml'}
         }
       };

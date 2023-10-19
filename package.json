@@ -45,15 +45,15 @@
   },
   "prettier": "@vcsuite/eslint-config/prettier.js",
   "peerDependencies": {
-    "@vcmap-cesium/engine": "~2.4.1",
-    "@vcmap/core": "^5.0.0-rc.35",
-    "@vcmap/ui": "^5.0.0-rc.26",
-    "ol": "~7.4.0",
+    "@vcmap-cesium/engine": "~4.0.3",
+    "@vcmap/core": "^5.0.0",
+    "@vcmap/ui": "^5.0.0",
+    "ol": "~7.5.2",
     "vue": "~2.7.3",
     "vuetify": "~2.6.7"
   },
   "devDependencies": {
-    "@vcmap/plugin-cli": "^2.1.9",
+    "@vcmap/plugin-cli": "^2.1.14",
     "@vcsuite/eslint-config": "^3.0.3",
     "@vitest/coverage-c8": "^0.32.4",
     "jest-canvas-mock": "^2.5.2",

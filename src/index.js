@@ -1,11 +1,7 @@
 import { createToggleAction, ToolboxType, WindowSlot } from '@vcmap/ui';
 import { version, name } from '../package.json';
 import WFSAttributeQuery from './ui/wfsAttributeQueryComponent.vue';
-
-/**
- * @typedef {Object} PluginState
- * @property {any} prop
- */
+import getDefaultOptions from './defaultOptions.js';
 
 /**
  * @param {T} config - the configuration of this plugin instance, passed in from the app.
@@ -18,17 +14,21 @@ export default function plugin(config, baseUrl) {
   console.log(config, baseUrl);
 
   return {
+    _pluginConfig: undefined,
     get name() {
       return name;
     },
     get version() {
       return version;
     },
+    get config() {
+      return this._pluginConfig;
+    },
     _destroyToggleAction: () => {},
     _removeToolbox: () => {},
     state: {},
     initialize(vcsUiApp, state) {
-
+      this._pluginConfig = getDefaultOptions();
       const { action, destroy } = createToggleAction(
         {
           id: 'wfsAttributeQueryWidgetAction',
@@ -62,6 +62,7 @@ export default function plugin(config, baseUrl) {
       this._removeToolbox = () => {
         vcsUiApp.toolboxManager.remove(id);
       };
+      console.log("Config loaded", this._pluginConfig)
     },
     destroy() {
       this._destroyToggleAction();
