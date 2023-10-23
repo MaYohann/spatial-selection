@@ -74,27 +74,40 @@
                 />
               </v-col>
             </v-row>
-            <v-row >
-              <v-col cols="2">
-                <VcsLabel html-for="textInput" class="text-caption">
-                  Condition:
-                </VcsLabel>
-              </v-col>
-              <v-col>
-                <VcsTextField
-                    :placeholder="!selectedFilter.length ? 'You need to select a attribute first' : placeHolder"
-                    :disabled="!selectedFilter.length"
-                    v-model="listIds"
-                    clearable
-                    :rules="[rules.required]"
-                />
-              </v-col>
-            </v-row>
             <v-row no-gutters  v-if="sampleValues && sampleValues[selectedFilter]">
               <v-col cols="8">
                 <VcsLabel html-for="textInput" class="text-caption">
-                  Example value: {{sampleValues[selectedFilter].uniqueValues[0].value}}
+                  Example value: {{sampleValues[selectedFilter]}}
                 </VcsLabel>
+              </v-col>
+            </v-row>
+            <v-row class="mt-0 pt-0 mb-0 pb-0">
+              <v-col cols="10" class="mb-0 pb-0">
+              <VcsLabel html-for="textInput" class="text-caption">
+                Conditions (equality):
+              </VcsLabel>
+              </v-col>
+            </v-row>
+            <v-row v-for="(condition, index) in conditions" :key="index"  class="d-flex pt-0 mt-0 py-1 pr-1 align-center">
+              <v-col class="mt-0 pt-1">
+                <div class="text-center">
+                  <VcsTextField
+                      :placeholder="!selectedFilter.length ? 'You need to select a attribute first' : placeHolder"
+                      :disabled="!selectedFilter.length"
+                      v-model="conditions[index]"
+                      clearable
+                      :rules="[rules.required]"
+                  />
+                </div>
+              </v-col>
+              <v-col cols="2" fluid fill-height text-center class="mt-0 pt-1">
+                  <VcsButton @click="removeCase" color="primary"         icon="mdi-pause-circle"
+                  >X</VcsButton>
+              </v-col>
+            </v-row>
+            <v-row class="pt-0 mt-1">
+              <v-col cols="5" class="pt-0 mt-0">
+                <VcsButton @click="addCase" color="primary">+ Add condition</VcsButton>
               </v-col>
             </v-row>
             <v-row justify="space-around">
@@ -135,6 +148,7 @@
     name: 'WFSAttributeQuery',
     components: {
       VContainer,
+      VcsButton,
       VcsFormSection,
       VcsLabel,
       VcsSelect,
@@ -155,7 +169,7 @@
         return 'Must be a ' + this.placeHolder
       },
       canRequest() {
-        return this.activeFilterInput && this.listIds !== ""
+        return this.activeFilterInput && this.conditions[0] !== ""
       }
     },
     methods: {
@@ -188,9 +202,9 @@
         if (this.filtersOn[this.selectedFilter] === 'integer') {
           return /^\s*\d+\s*(,\s*\d+\s*)*$/.test(value) || this.requiredLegend
         } else if (this.filtersOn[this.selectedFilter] === 'string') {
-          return /^\d+(,\d+)*$/.test(value) || this.requiredLegend
+          return /^(\d+)(,\s*\d+)*$/.test(value) || this.requiredLegend
         } else {
-          return this.filtersOn[this.selectedFilter] + 'Unmamaged type'
+          return this.filtersOn[this.selectedFilter] + 'Unmanaged type'
         }
       },
       async generateQueryUrl() {
@@ -200,8 +214,8 @@
           maxFeatures: 1000,
           outputCrs: "EPSG:4326"
         });
-        if (this.listIds !== "") {
-          url += "&cql_filter=" + this.selectedFilter + " IN (" + this.listIds + ")"
+        if (this.conditions !== "") {
+          url += "&cql_filter=" + this.selectedFilter + " IN (" + this.conditions.join(',') + ")"
         }
         return url;
       },
@@ -228,12 +242,18 @@
         this.querying = false
       },
 
+      addCase() {
+        this.conditions.push(''); // Add a new text input
+      },
+      removeCase() {
+        this.conditions.splice(0, 1); // Add a new text input
+      },
       clearForms() {
         this.isValid = false
         this.querying = false
         this.activeFilterInput = false
         this.filtersOn = []
-        this.listIds = ''
+        this.conditions = ['']
         this.selectedLayer = {}
         this.selectedFilter = {}
       },
@@ -277,10 +297,16 @@
       },
       async requestFields() {
         let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
-        let pop = await wfs.getFeatureTypeFull(this.selectedLayer.layers)
-        this.sampleValues = await wfs.getFeatureTypePropDetails(this.selectedLayer.layers)
+        let prop = await wfs.getFeatureTypeFull(this.selectedLayer.layers)
+        let url = wfs.getFeatureUrl(this.selectedLayer.layers, {
+          asJson: true,
+          maxFeatures: 1,
+          outputCrs: "EPSG:4326"
+        });
+        let res = await axios.get(url)
+        this.sampleValues = res.data.features[0].properties
         this.activeFilterInput = true
-        this.filtersOn = pop.properties
+        this.filtersOn = prop.properties
       }
     },
     setup() {
@@ -324,7 +350,7 @@
         isValid: false,
         querying: false,
         filtersOn: [],
-        listIds: '',
+        conditions: [''],
         selectedLayer: {},
         activeFilterInput: false,
         selectedFilter: {},
