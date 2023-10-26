@@ -3,7 +3,7 @@
   "mapcontainer": "vcs_map_container",
   "_id": "Rennes3DConfig",
   "startingViewpointName": "rennes",
-  "startingMapName": "cesium",
+  "startingMapName": "ol3",
   "projection": {
     "epsg": "25833",
     "proj4": "+proj=utm +zone=33 +ellps=GRS80 +units=m +no_defs"
@@ -258,13 +258,5 @@
     }
   ],
   "plugins": [
-    {
-      "name": "@vcmap/theme-changer",
-      "entry": "plugins/@vcmap/theme-changer/index.js"
-    },
-    {
-      "name": "@vcmap/create-link",
-      "entry": "plugins/@vcmap/create-link/index.js"
-    }
   ]
 }
