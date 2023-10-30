@@ -8,28 +8,114 @@
         color="primary"
         grow
     >
-          <v-tab :value="0">Attribute</v-tab>
-          <v-tab :value="1">Spatial</v-tab>
-
+          <v-tab :value="0">Spatial</v-tab>
+          <v-tab :value="1">Attribute</v-tab>
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item :value="0" :key="0" :eager="true">
-        <v-container class="px-0 py-1 main">
-
-          <VcsFormSection heading="Source of spatial selection">
-            <v-container class="py-0 px-1">
-              <v-row>
-                <v-col cols="4">
-                  <VcsLabel html-for="textInput" class="text-caption">
-                    3D Object
-                  </VcsLabel>
-                </v-col>
-                <v-col>
-                  <VcsSelect
-                      v-model="selectedObject3D"
-                      :items="object3Ds"
-                      :item-text="(item) => item.name"
-                      :item-value="
+        <v-card-text>Filter an area (a city, a neighborhood, ...), then highlight or download all the 3d elements of this area</v-card-text>
+        <VcsFormSection class="mt-2 mb-2" heading="Source of spatial selection">
+          <v-container class="py-0 px-1">
+            <v-row>
+              <v-col cols="4">
+                <VcsLabel html-for="textInput" class="text-caption">
+                  3D Object
+                </VcsLabel>
+              </v-col>
+              <v-col>
+                <VcsSelect
+                    v-model="selectedObject3D"
+                    :items="object3Ds"
+                    :item-text="(item) => item.name"
+                    :item-value="
+                    (item) => {
+                      return {
+                        name: item.name,
+                        url: item.url,
+                      };
+                    }
+                  "
+                    placeholder="Select the source of the spatial selection"
+                />
+              </v-col>
+            </v-row>
+          </v-container>
+        </VcsFormSection>
+        <VcsFormSection class="mt-2 mb-2" heading="Layer to filter and fetch area">
+          <v-container class="py-0 px-1">
+            <v-row class="mt-1 mb-1">
+              <v-col cols="2">
+                <VcsLabel html-for="textInput" class="text-caption">
+                  Layer
+                </VcsLabel>
+              </v-col>
+              <v-col cols="7">
+                <VcsSelect
+                    v-model="selectedLayer"
+                    :items="layers"
+                    :item-text="(item) => item.name"
+                    :item-value="
+                        (item) => {
+                          return {
+                            name: item.name,
+                            url: item.url,
+                            layers: item.layers,
+                          };
+                        }
+                      "
+                    @change="onLayerChange"
+                    placeholder="Please select a layer"
+                />
+              </v-col>
+              <v-col cols="1" md="2">
+                <VcsFormButton @click="requestFields()">&#10227;</VcsFormButton>
+              </v-col>
+            </v-row>
+          </v-container>
+        </VcsFormSection>
+        <VcsFormSection heading="Attribute Filter" class="mt-3">
+          <v-container class="py-0 px-1">
+            <AttributeFilterItem
+                v-for="af in attributeFilters"
+                :key="af.uuid"
+                :uuid="af.uuid"
+                :sampleValues="sampleValues"
+                :attributes="Object.entries(filtersOn).map(elt => {return {name: elt[0], type: elt[1]}})"
+                @selectedAttributeFilter="selectedAttributeFilterChanged"
+                @deleteAttributeFilter="deleteAttributeFilter"
+            ></AttributeFilterItem>
+            <v-row class="mt-1">
+              <v-col cols="6" >
+                <VcsButton @click="addFilter()" color="primary">+ Add filter</VcsButton>
+              </v-col>
+            </v-row>
+          </v-container>
+        </VcsFormSection>
+        <v-row justify="space-around" class="mt-5">
+          <v-col>
+            <VcsFormButton variant="filled" @click="clear()">Clear</VcsFormButton>
+          </v-col>
+          <v-col>
+            <VcsFormButton @click="runAttributeQuery()" :disabled="!canRequest">Request objects</VcsFormButton>
+          </v-col>
+        </v-row>
+      </v-window-item>
+      <v-window-item :value="1" :key="1" :eager="true">
+        <v-card-text class="mb-1">Filter 3d elements by attribute (ex: get all flat roof)</v-card-text>
+        <VcsFormSection class="mt-2 mb-2" heading="Source of spatial selection">
+          <v-container class="py-0 px-1">
+            <v-row>
+              <v-col cols="4">
+                <VcsLabel html-for="textInput" class="text-caption">
+                  3D Object
+                </VcsLabel>
+              </v-col>
+              <v-col>
+                <VcsSelect
+                    v-model="selectedObject3D"
+                    :items="object3Ds"
+                    :item-text="(item) => item.name"
+                    :item-value="
                       (item) => {
                         return {
                           name: item.name,
@@ -37,26 +123,26 @@
                         };
                       }
                     "
-                      placeholder="Select the source of the spatial selection"
-                  />
-                </v-col>
-              </v-row>
-            </v-container>
-          </VcsFormSection>
-          <VcsFormSection heading="Attribute on which the mapping has to be done">
-            <v-container class="py-0 px-1">
-              <v-row>
-                <v-col cols="2">
-                  <VcsLabel html-for="textInput" class="text-caption">
-                    Layer
-                  </VcsLabel>
-                </v-col>
-                <v-col cols="7">
-                  <VcsSelect
-                      v-model="selectedLayer"
-                      :items="layers"
-                      :item-text="(item) => item.name"
-                      :item-value="
+                    placeholder="Select the source of the spatial selection"
+                />
+              </v-col>
+            </v-row>
+          </v-container>
+        </VcsFormSection>
+        <VcsFormSection class="mt-2 mb-2" heading="Layer to filter and match">
+          <v-container class="py-0 px-1 ">
+            <v-row class="mt-1 mb-1">
+              <v-col cols="2">
+                <VcsLabel html-for="textInput" class="text-caption">
+                  Layer
+                </VcsLabel>
+              </v-col>
+              <v-col cols="7">
+                <VcsSelect
+                    v-model="selectedLayer"
+                    :items="layers"
+                    :item-text="(item) => item.name"
+                    :item-value="
                           (item) => {
                             return {
                               name: item.name,
@@ -65,86 +151,65 @@
                             };
                           }
                         "
-                      @change="onLayerChange"
-                      placeholder="Please select a layer"
-                  />
+                    @change="onLayerChange"
+                    placeholder="Please select a layer"
+                />
+              </v-col>
+              <v-col cols="1" md="2">
+                <VcsFormButton @click="requestFields()">&#10227;</VcsFormButton>
+              </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col cols="2">
+                <VcsLabel html-for="textInput" class="text-caption">
+                  GML ID
+                </VcsLabel>
+              </v-col>
+              <v-col v-if="activeFilterInput">
+                <VcsSelect
+                    v-model="selectedGMLIDAttribute"
+                    :items="Object.entries(filtersOn)"
+                    :item-text="(item) => item[0] + ':' + item[1]"
+                    :item-value="(item) => item[0]"
+                    placeholder="Attribute for GML ID"
+                />
+              </v-col>
+              <v-col v-else cols="8">
+                <VcsLabel>
+                  Select and request a layer first</VcsLabel>
+              </v-col>
+            </v-row>
+          </v-container>
+        </VcsFormSection>
+        <VcsFormSection heading="Attribute Filter" class="mt-3">
+          <v-container class="py-0 px-1">
+            <AttributeFilterItem
+                v-for="af in attributeFilters"
+                :key="af.uuid"
+                :uuid="af.uuid"
+                :sampleValues="sampleValues"
+                :attributes="Object.entries(filtersOn).map(elt => {return {name: elt[0], type: elt[1]}})"
+                @selectedAttributeFilter="selectedAttributeFilterChanged"
+                @deleteAttributeFilter="deleteAttributeFilter"
+            ></AttributeFilterItem>
+            <v-row class="mt-1">
+                <v-col cols="6" >
+                  <VcsButton @click="addFilter()" color="primary">+ Add filter</VcsButton>
                 </v-col>
-                <v-col cols="1" md="2">
-                  <VcsFormButton @click="requestFields()">&#10227;</VcsFormButton>
-                </v-col>
-              </v-row>
-              <v-row>
-                <v-col cols="2">
-                  <VcsLabel html-for="textInput" class="text-caption">
-                    From:
-                  </VcsLabel>
-                </v-col>
-                <v-col>
-                  <VcsSelect
-                      v-model="selectedFilter"
-                      :items="Object.entries(filtersOn)"
-                      :item-text="(item) => item[0] + ':' + item[1]"
-                      :item-value="(item) => item[0]"
-                      :disabled=!activeFilterInput
-                      :placeholder="!activeFilterInput ? 'You need to select and request a layer first' : 'Select attribute'"
-                      hint="Request layer first"
-                      persistent-hint
-                  />
-                </v-col>
-              </v-row>
-              <v-row no-gutters v-if="sampleValues && sampleValues[selectedFilter]">
-                <v-col cols="8">
-                  <VcsLabel html-for="textInput" class="text-caption">
-                    Example value: {{ sampleValues[selectedFilter] }}
-                  </VcsLabel>
-                </v-col>
-              </v-row>
-              <v-row class="mt-0 pt-0 mb-0 pb-0">
-                <v-col cols="10" class="mb-0 pb-0">
-                  <VcsLabel html-for="textInput" class="text-caption">
-                    Conditions (equality):
-                  </VcsLabel>
-                </v-col>
-              </v-row>
-              <v-row v-for="(condition, index) in conditions" :key="index" class="d-flex pt-0 mt-0 py-1 pr-1 align-center">
-                <v-col class="mt-0 pt-1">
-                  <div class="text-center">
-                    <VcsTextField
-                        :placeholder="!selectedFilter.length ? 'You need to select a attribute first' : placeHolder"
-                        :disabled="!selectedFilter.length"
-                        v-model="conditions[index]"
-                        clearable
-                        :rules="[rules.required]"
-                    />
-                  </div>
-                </v-col>
-                <v-col cols="2" fluid fill-height text-center class="mt-0 pt-1">
-                  <VcsButton @click="removeCase" color="primary" icon="mdi-pause-circle"
-                  >X
-                  </VcsButton>
-                </v-col>
-              </v-row>
-              <v-row class="pt-0 mt-1">
-                <v-col cols="5" class="pt-0 mt-0">
-                  <VcsButton @click="addCase" color="primary">+ Add condition</VcsButton>
-                </v-col>
-              </v-row>
-              <v-row justify="space-around">
-                <v-col>
-                  <VcsFormButton variant="filled" @click="clear()">Clear</VcsFormButton>
-                </v-col>
-                <v-col>
-                  <VcsFormButton @click="runQuery()" :disabled="!canRequest">Request objects</VcsFormButton>
-                </v-col>
-              </v-row>
-            </v-container>
-          </VcsFormSection>
-        </v-container>
-      </v-window-item>
-      <v-window-item :value="1" :key="1">
-        Salut
+            </v-row>
+          </v-container>
+        </VcsFormSection>
+        <v-row justify="space-around" class="mt-5">
+          <v-col>
+            <VcsFormButton variant="filled" @click="clear()">Clear</VcsFormButton>
+          </v-col>
+          <v-col>
+            <VcsFormButton @click="runAttributeQuery()" :disabled="!canRequestAttribute">Request objects</VcsFormButton>
+          </v-col>
+        </v-row>
       </v-window-item>
     </v-window>
+
   </v-container>
 </template>
 
@@ -162,11 +227,14 @@ import {
   VcsTextField,
   VcsFormButton,
   VcsFormSection,
-  VcsUiApp, NotificationType
+  VcsUiApp, NotificationType, VcsTextArea
 } from '@vcmap/ui';
 import {inject, onMounted, ref, computed} from 'vue';
 import {name} from '../../package.json';
 import {VCard, VCardText, VTabs, VWindow, VWindowItem} from "vuetify/lib/components";
+import AttributeFilter from "./attributeFilter.js";
+import Attribute from "./attribute.js";
+import AttributeFilterItem from "./AttributeFilterItem.vue";
 
 export default {
   name: 'WFSAttributeQuery',
@@ -179,10 +247,12 @@ export default {
     VcsFormSection,
     VcsLabel,
     VcsSelect,
+    VcsTextArea,
     VRow,
     VCol,
     VcsFormButton,
     VcsTextField,
+    AttributeFilterItem,
     VWindow, VWindowItem
   },
   computed: {
@@ -197,10 +267,42 @@ export default {
       return 'Must be a ' + this.placeHolder
     },
     canRequest() {
-      return this.activeFilterInput && this.conditions[0] !== ""
+      return this.activeFilterInput && this.attributeFilters !== [] && this.selectedObject3D
+    },
+    canRequestAttribute() {
+      return this.canRequest && this.selectedGMLIDAttribute
     }
   },
   methods: {
+    addFilter() {
+      this.attributeFilters.push(
+          new AttributeFilter(new Attribute('', ''), '', ''),
+      );
+    },
+    deleteAttributeFilter(attributeFilter) {
+      let deletedIndex = -1;
+      this.attributeFilters.forEach((af, index) => {
+        if (af.uuid === attributeFilter.uuid) {
+          deletedIndex = index;
+        }
+      });
+      if (deletedIndex > -1) {
+        this.attributeFilters.splice(deletedIndex, 1);
+      }
+    },
+    selectedAttributeFilterChanged(value) {
+      console.log("Value: ", value)
+      let updatedIndex = -1;
+      this.attributeFilters.forEach((af, index) => {
+        if (af.uuid === value.uuid) {
+          updatedIndex = index;
+        }
+      });
+      if (updatedIndex > -1) {
+        this.attributeFilters[updatedIndex] = value;
+      }
+    },
+
     activate() {
 
     },
@@ -235,6 +337,10 @@ export default {
         return this.filtersOn[this.selectedFilter] + 'Unmanaged type'
       }
     },
+    generateCQLStatement(attributeFilters) {
+      return attributeFilters.map((af) => `(${af.toCQL()})`).join('AND');
+    },
+
     async generateQueryUrl() {
       let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
       let url = wfs.getFeatureUrl(this.selectedLayer.layers, {
@@ -247,6 +353,20 @@ export default {
       }
       return url;
     },
+
+    async generateQueryUrlAttribute() {
+      let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
+      let url = wfs.getFeatureUrl(this.selectedLayer.layers, {
+        asJson: true,
+        maxFeatures: 10000,
+        outputCrs: "EPSG:4326"
+      });
+      if (this.attributeFilters !== []) {
+        url += `&cql_filter=${this.generateCQLStatement(this.attributeFilters)}`
+      }
+      return url;
+    },
+
 
     /**
      * Display notif of request pending
@@ -284,16 +404,24 @@ export default {
       this.conditions = ['']
       this.selectedLayer = {}
       this.selectedFilter = {}
+      this.sampleValues = {}
+      this.attributes = []
+      this.selectedGMLIDAttribute = null
     },
 
     clearDatas() {
-      const object3DLayer = this.app.layers.getByKey(this.selectedObject3D.name);
-      object3DLayer.featureVisibility.clearHighlighting();
+      if (this.selectedObject3D) {
+        const object3DLayer = this.app.layers.getByKey(this.selectedObject3D.name);
+        if (object3DLayer) {
+          object3DLayer.featureVisibility.clearHighlighting();
+        }
+        this.selectedObject3D = null
+      }
     },
 
     clear() {
-      this.clearForms()
       this.clearDatas()
+      this.clearForms()
     },
 
     /**
@@ -305,7 +433,7 @@ export default {
     async runQuery() {
       this.startQueryingUi()
       let setToHighlight = new Set()
-      let url = await this.generateQueryUrl()
+      let url = await this.generateQueryUrlAttribute()
       let response = await axios.get(url)
       let nbBuildings = 0
       for (const feature of response.data.features) {
@@ -322,6 +450,51 @@ export default {
       }
       this.endQueryingUi(`Querying successfull:  ${nbBuildings} buildings returned`);
       this.highlight3DObjects(this.app, this.selectedObject3D.name, setToHighlight);
+    },
+
+    parseQueryData(queryData, gmlIDAttribute) {
+      const selectedGmlIds = [];
+      queryData.features.forEach((f) => {
+        selectedGmlIds.push(f.properties[gmlIDAttribute]);
+      });
+      return {
+        selectedGmlIds,
+        totalFeatures: queryData.totalFeatures,
+        numberMatched: queryData.numberMatched,
+        numberReturned: queryData.numberReturned,
+      };
+    },
+
+    async runAttributeQuery() {
+      if (!this.canRequest) {
+        this.app.notifier.add({
+          type: NotificationType.ERROR,
+          message: 'Please select 3D object first',
+        });
+      } else {
+        let url = await this.generateQueryUrlAttribute()
+        console.log("Url", url)
+        let response = await axios.get(url)
+        console.log("Response", response)
+
+        console.log("selectedGMLIDAttribute", this.selectedGMLIDAttribute)
+        // Parse Data
+        const queryResult = this.parseQueryData(
+            response.data,
+            this.selectedGMLIDAttribute,
+        );
+        console.log("Query res", queryResult.selectedGmlIds)
+        this.app.notifier.add({
+          type: NotificationType.SUCCESS,
+          message: `Highlight ${queryResult.numberReturned} of ${queryResult.numberMatched} matched features`,
+        });
+        // // Highlight
+        this.highlight3DObjects(
+            this.app,
+            this.selectedObject3D.name,
+            queryResult.selectedGmlIds,
+        );
+      }
     },
     async requestFields() {
       let wfs = await new WfsEndpoint(this.selectedLayer.url).isReady()
@@ -345,8 +518,9 @@ export default {
     const wmsLayers = ref([]);
     const attributes = ref([]);
     const wfsLayers = ref([]);
+    const selectedGMLIDAttribute = ref();
 
-    const selectedObject3D = ref({});
+    const selectedObject3D = ref();
     const selectedWMSLayer = ref({});
 
     // TODO: Make it work with multiple attributes, operator, and criteria
@@ -372,6 +546,8 @@ export default {
       selectedLayer: selectedWMSLayer,
       selectedAttribute,
       selectedCriteria,
+      selectedGMLIDAttribute,
+
     };
   },
   data() {
@@ -381,11 +557,13 @@ export default {
       querying: false,
       filtersOn: [],
       conditions: [''],
+      selectedMapLayer: {},
       selectedLayer: {},
       activeFilterInput: false,
       selectedFilter: {},
       sampleValues: {},
       state: {},
+      attributeFilters: [],
       rules: {
         required: value => this.conditionRule(value)
       },
