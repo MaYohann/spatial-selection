@@ -1,4 +1,5 @@
-export let xmlTemplate = '<?xml version="1.0" encoding="UTF-8"?>\
+export const xmlTemplate =
+  '<?xml version="1.0" encoding="UTF-8"?>\
 <wfs:GetFeature xmlns:wfs="http://www.opengis.net/wfs/2.0" service="WFS" version="2.0.0"\
   outputFormat="application/json" xmlns:gml="http://www.opengis.net/gml"\
   xmlns:core="http://www.opengis.net/citygml/2.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:bldg="http://www.opengis.net/citygml/building/2.0" xmlns:gen="http://www.opengis.net/citygml/generics/2.0">\

@@ -17,14 +17,14 @@
                 return { name: item.name, type: item.type };
               }
             }
-            "
+          "
           placeholder="Please select the attribute"
         />
       </v-col>
       <v-col cols="1">
         <VcsToolButton
-            :icon="'mdi-information-outline'"
-            :tooltip="'Example value: ' + sampleValues[selectedAttribute]"
+          :icon="'mdi-information-outline'"
+          :tooltip="'Example value: ' + sampleValues[selectedAttribute.name]"
         ></VcsToolButton>
       </v-col>
       <v-col cols="1">
@@ -50,12 +50,14 @@
         <VcsTextField v-model="selectedCriteria"> </VcsTextField>
       </v-col>
     </v-row>
+    <v-divider></v-divider>
   </div>
 </template>
 <script>
   import { VCol, VRow } from 'vuetify/lib';
 
   import { VcsLabel, VcsTextField, VcsSelect, VcsToolButton } from '@vcmap/ui';
+  import { VDivider } from 'vuetify/lib/components';
   import AttributeFilter from './attributeFilter.js';
   import Attribute from './attribute.js';
 
@@ -64,6 +66,7 @@
     components: {
       VCol,
       VRow,
+      VDivider,
       VcsLabel,
       VcsTextField,
       VcsSelect,
@@ -80,8 +83,8 @@
       },
       sampleValues: {
         type: Object,
-        required: true
-      }
+        required: true,
+      },
     },
     data() {
       return {
@@ -128,13 +131,11 @@
           boolean: ['=', '!='],
           string: ['LIKE', 'ILIKE'],
         };
-        // TODO: Make sure the type and the operator are available in WFS
-        // console.log("Selected att", this.selectedAttribute)
-        // console.log("Selected att", this.attributes.find(elt => elt.name === this.selectedAttribute.name))
-        // console.log("sampleValues", this.sampleValues)
 
         if (this.attributes !== []) {
-          let selectedType = this.attributes.find(elt => elt.name === this.selectedAttribute.name)?.type
+          const selectedType = this.attributes.find(
+            (elt) => elt.name === this.selectedAttribute.name,
+          )?.type;
           if (['number', 'double', 'integer', 'int'].includes(selectedType)) {
             return operator.number;
           } else if (selectedType === 'string') {
@@ -145,7 +146,7 @@
             return [];
           }
         }
-        return []
+        return [];
       },
     },
   };

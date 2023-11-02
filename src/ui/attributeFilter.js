@@ -32,10 +32,15 @@ class AttributeFilter {
   }
 
   toCQL() {
+    if (!this.isValid()) return;
     if (['LIKE', 'ILIKE'].includes(this.operator)) {
       return `${this.attribute.name} ${this.operator} '${this.value}'`;
     }
     return `${this.attribute.name}${this.operator}${this.value}`;
+  }
+
+  isValid() {
+    return this.attribute !== null && this.operator !== '' && this.value !== '';
   }
 }
 

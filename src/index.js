@@ -62,7 +62,7 @@ export default function plugin(config, baseUrl) {
       this._removeToolbox = () => {
         vcsUiApp.toolboxManager.remove(id);
       };
-      console.log("Config loaded", this._pluginConfig)
+      console.log('Config loaded', this._pluginConfig);
     },
     destroy() {
       this._destroyToggleAction();

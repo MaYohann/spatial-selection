@@ -14,7 +14,8 @@
             {
               "name": "Rennes 3D Project",
               "modules": ["rennes3d.config.json"]
-            }]
+            }
+          ]
         }
       ]
     },
