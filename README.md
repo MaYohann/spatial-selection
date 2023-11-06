@@ -1,3 +1,3 @@
-# spatial-selection
+# wfs-selection
 
 describe your plugin

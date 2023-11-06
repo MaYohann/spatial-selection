@@ -294,7 +294,7 @@
     VcsTextArea,
     VcsRadio,
   } from '@vcmap/ui';
-  import { inject, onMounted, ref, computed } from 'vue';
+  import { inject, ref } from 'vue';
   import {
     VCard,
     VCardText,
@@ -304,14 +304,14 @@
     VWindowItem,
   } from 'vuetify/lib/components';
   import { name } from '../../package.json';
-  import { xmlTemplate } from '../../pattern.js';
+  import { xmlTemplate } from '../pattern.js';
   import { getLayerByClass, getLayerByName } from '../utils/vcsUtils.js';
   import AttributeFilter from './attributeFilter.js';
   import Attribute from './attribute.js';
   import AttributeFilterItem from './AttributeFilterItem.vue';
 
   export default {
-    name: 'WFSAttributeQuery',
+    name: 'WFSSelection',
     components: {
       VCard,
       VCardText,
@@ -498,7 +498,6 @@
       clear() {
         this.clearDatas();
         this.clearForms();
-        axios.st;
       },
 
       /**
@@ -674,8 +673,6 @@
       object3Ds.value = getLayerByClass(app, ['CesiumTilesetLayer']);
       wmsLayers.value = getLayerByClass(app, ['WMSLayer']);
       wfsLayers.value = getLayerByName(app, 'toDisplay');
-
-      onMounted(() => {});
 
       return {
         app,

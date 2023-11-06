@@ -1,6 +1,6 @@
 import { createToggleAction, ToolboxType, WindowSlot } from '@vcmap/ui';
 import { version, name } from '../package.json';
-import WFSAttributeQuery from './ui/wfsAttributeQueryComponent.vue';
+import WfsSelector from './ui/WfsSelectorComponent.vue';
 import getDefaultOptions from './defaultOptions.js';
 
 /**
@@ -31,17 +31,17 @@ export default function plugin(config, baseUrl) {
       this._pluginConfig = getDefaultOptions();
       const { action, destroy } = createToggleAction(
         {
-          id: 'wfsAttributeQueryWidgetAction',
-          title: 'WFS Spatial Selection',
-          name: 'WFS Spatial Selection',
+          id: 'wfsSelectionWidgetAction',
+          title: 'WFS Selection',
+          name: 'WFS Selection',
           icon: 'mdi-database-search',
         },
         {
-          id: 'wfsAttributeQueryWidgetAction',
-          component: WFSAttributeQuery,
+          id: 'wfsSelectionWidgetAction',
+          component: WfsSelector,
           slot: WindowSlot.DYNAMIC_LEFT,
           state: {
-            headerTitle: 'WFS Spatial Selection',
+            headerTitle: 'WFS Selection',
             headerIcon: 'mdi-database-search',
           },
         },
@@ -70,8 +70,8 @@ export default function plugin(config, baseUrl) {
     },
     i18n: {
       en: {
-        'wfs-attribute-query': {
-          title: 'WFS Spatial Selection',
+        'wfs-selection': {
+          title: 'WFS Selection',
         },
       },
     },

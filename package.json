@@ -1,5 +1,5 @@
 {
-  "name": "spatial-selection",
+  "name": "wfs-selection",
   "version": "1.0.0",
   "description": "Query attribute and use it for next query",
   "type": "module",
@@ -58,8 +58,7 @@
     "@vitest/coverage-c8": "^0.32.4",
     "jest-canvas-mock": "^2.5.2",
     "jsdom": "^22.1.0",
-    "vitest": "^0.32.4",
-    "vuetify": "~2.6.7"
+    "vitest": "^0.32.4"
   },
   "dependencies": {
     "@camptocamp/ogc-client": "^1.0.0",

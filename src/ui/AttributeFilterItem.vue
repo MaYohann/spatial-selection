@@ -136,7 +136,7 @@
           const selectedType = this.attributes.find(
             (elt) => elt.name === this.selectedAttribute.name,
           )?.type;
-          if (['number', 'double', 'integer', 'int'].includes(selectedType)) {
+          if (['number', 'double', 'integer', 'int', 'float'].includes(selectedType)) {
             return operator.number;
           } else if (selectedType === 'string') {
             return operator.string;
