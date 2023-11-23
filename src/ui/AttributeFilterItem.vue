@@ -57,7 +57,7 @@
   import { VCol, VRow } from 'vuetify/lib';
 
   import { VcsLabel, VcsTextField, VcsSelect, VcsToolButton } from '@vcmap/ui';
-  import { VDivider } from 'vuetify/lib/components';
+  import { VDivider } from 'vuetify/lib';
   import AttributeFilter from './attributeFilter.js';
   import Attribute from './attribute.js';
 

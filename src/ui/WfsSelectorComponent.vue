@@ -259,17 +259,17 @@
       <v-col cols="4">
         <VcsFormButton
           @click="runQuery()"
-          :disabled="!canRequest"
+          :disabled="!canDownload"
           :loading="querying"
           :tooltip="'Display all elements matching request'"
           >Display</VcsFormButton
         >
       </v-col>
-      <v-col cols="3" v-if="tab === 1">
+      <v-col cols="3">
         <VcsFormButton
           @click="downloadJSON()"
           :icon="'mdi-download-circle'"
-          :disabled="!canRequest"
+          :disabled="!canDownload"
           :loading="querying"
           :tooltip="'Download all features match with the filter'"
         ></VcsFormButton>
@@ -302,7 +302,7 @@
     VTabs,
     VWindow,
     VWindowItem,
-  } from 'vuetify/lib/components';
+  } from 'vuetify/lib';
   import { name } from '../../package.json';
   import { xmlTemplate } from '../pattern.js';
   import { getLayerByClass, getLayerByName } from '../utils/vcsUtils.js';
@@ -338,6 +338,12 @@
       isReady() {},
       canAddFilter() {
         return this.activeFilterInput;
+      },
+      canDownload() {
+        if (this.tab === 0 && this.setToHighlight) {
+          return false;
+        }
+        return this.canRequest();
       },
       canRequest() {
         if (this.tab === 1) {
@@ -493,6 +499,7 @@
           }
           this.selectedObject3D = null;
         }
+        this.setToHighlight = {}
       },
 
       clear() {
@@ -544,6 +551,7 @@
             this.selectedObject3D.name,
             setToHighlight,
           );
+          this.setToHighlight = setToHighlight;
         } catch {
           this.endQueryingUiFailure(`Failure retrieving data`);
           console.log('API call failed');
@@ -590,39 +598,59 @@
         }
       },
 
+      async downloadHighlight() {
+        // Create a JSON object
+        const blob = new Blob([JSON.stringify(this.setToHighlight)], {
+          type: 'application/json',
+        });
+        const virtualLink = document.createElement('a');
+        virtualLink.href = URL.createObjectURL(blob);
+        virtualLink.download = `filtered-GML-IDs-${suffix}.json`;
+        virtualLink.style.display = 'none';
+        document.body.appendChild(virtualLink);
+        virtualLink.click();
+        URL.revokeObjectURL(virtualLink.href);
+        document.body.removeChild(virtualLink);
+      },
+
       async downloadJSON() {
-        this.startQueryingUi();
-        const url = await this.generateQueryUrlAttribute();
-        try {
-          const response = await axios.get(url, { timeout: this.timeout });
-          const queryResult = this.parseQueryData(
-            response.data,
-            this.selectedGMLIDAttribute,
-          );
-          // Create a JSON object
-          const blob = new Blob([JSON.stringify(queryResult)], {
+        let blob;
+        if (this.tab === 1) {
+          this.startQueryingUi();
+          const url = await this.generateQueryUrlAttribute();
+          try {
+            const response = await axios.get(url, {timeout: this.timeout});
+            const queryResult = this.parseQueryData(
+                response.data,
+                this.selectedGMLIDAttribute,
+            );
+            // Create a JSON object
+            blob = new Blob([JSON.stringify(queryResult)], {
+              type: 'application/json',
+            });
+          }
+          catch (err) {
+              this.endQueryingUiFailure(`Failure retrieving data`);
+              console.log('API call failed');
+          }
+        } else {
+          blob = new Blob([JSON.stringify(this.setToHighlight)], {
             type: 'application/json',
           });
-
-          // Prepare filename
-          const cdt = new Date();
-          const suffix = cdt.toISOString().slice(0, -5).replace(/\D/g, '');
-
-          const virtualLink = document.createElement('a');
-          virtualLink.href = URL.createObjectURL(blob);
-          virtualLink.download = `filtered-GML-IDs-${suffix}.json`;
-          virtualLink.style.display = 'none';
-          document.body.appendChild(virtualLink);
-          virtualLink.click();
-          URL.revokeObjectURL(virtualLink.href);
-          document.body.removeChild(virtualLink);
-          this.endQueryingUiSuccess(
-            `${queryResult.numberReturned} selected GML ID are downloaded.`,
-          );
-        } catch (err) {
-          this.endQueryingUiFailure(`Failure retrieving data`);
-          console.log('API call failed');
         }
+        // Prepare filename
+        const cdt = new Date();
+        const suffix = cdt.toISOString().slice(0, -5).replace(/\D/g, '');
+
+        const virtualLink = document.createElement('a');
+        virtualLink.href = URL.createObjectURL(blob);
+        virtualLink.download = `filtered-GML-IDs-${suffix}.json`;
+        virtualLink.style.display = 'none';
+        document.body.appendChild(virtualLink);
+        virtualLink.click();
+        URL.revokeObjectURL(virtualLink.href);
+        document.body.removeChild(virtualLink);
+        this.endQueryingUiSuccess('File is downloading');
       },
 
       parseQueryData(queryData, gmlIDAttribute) {
@@ -706,6 +734,7 @@
         sampleValues: {},
         state: {},
         attributeFilters: [],
+        setToHighlight: {},
         postConfig: {
           headers: { 'Content-Type': 'text/xml' },
         },
